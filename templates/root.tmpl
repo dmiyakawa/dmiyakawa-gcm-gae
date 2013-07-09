@@ -1,0 +1,50 @@
+{# -*- jinja2 -*- -#}
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    {# Allow me to use <tag /> :-P #}
+    <meta charset="utf-8" />
+    <title>GCM exp</title>
+  </head>
+
+  <body>
+    <h1>Hello</h1>
+    {% if channels|length > 0 %}
+      <form name="send_message"
+            enctype="multipart/form-data"
+            accept-charset="utf-8">
+        {% for channel in channels -%}
+          <input type="radio"
+                 id="channel_id"
+                 name="channel_id"
+                 value="{{ channel.key.id() }}"
+                 checked="checked">
+            channel_id: {{ channel.key.id() }}
+          </input><br />
+        {% endfor %}
+        <input type="text"
+               id="message"
+               name="message"
+               placeholder="message">
+        </input>
+        <input type="button"
+               id="send_message"
+               name="send_message"
+               onclick="send_message_to_id()"
+               value="Send Channel Id">
+        </input>
+      </form>
+
+      <div id="result" name="result">
+
+      </div>
+
+      <script src="http://code.jquery.com/jquery.js"></script>
+      <script src="/js/send_message.js"></script>
+    {% else %}{#- channels|length > 0 -#}
+      <p>Channel Id not registered</p>
+    {% endif %}{#- channels|length > 0 -#}
+  </body>
+</html>
+{% endautoescape %}

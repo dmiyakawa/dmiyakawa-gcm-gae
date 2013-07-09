@@ -1,0 +1,17 @@
+{# -*- jinja2 -*- -#}
+<!DOCTYPE html>
+{% autoescape true %}
+<html>
+  <head>
+    {# Allow me to use <tag /> :-P #}
+    <meta charset="utf-8" />
+    <title>{{ title }}</title>
+  </head>
+  <body>
+    <h1>{{ title }}</h1>
+    <p>{{ message }}</p>
+    <hr />
+    <a href="/">Back to Home</a>
+  </body>
+</html>
+{% endautoescape %}
