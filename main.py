@@ -29,6 +29,7 @@ from google.appengine.ext import ndb
 from secret import CLIENT_ID
 from secret import CLIENT_SECRET
 from secret import REFRESH_TOKEN
+from secret import ALLOWED_EMAIL
 
 LOCAL_DEV = os.environ['SERVER_SOFTWARE'].startswith('Development')
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -67,7 +68,7 @@ def simple_sanitize(raw_string):
           .replace('"', '').replace("'",''))
 
 def is_appropriate_user(user):
-  return LOCAL_DEV or user.email() == 'd.miyakawa@gmail.com'
+  return LOCAL_DEV or user.email() == ALLOWED_EMAIL
 
 
 def render_message(title, message):
