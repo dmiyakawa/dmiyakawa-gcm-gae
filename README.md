@@ -1,20 +1,22 @@
-A simple example for Google Cloud Messaging
+A simple example for Google Cloud Messaging: GAE side.
 
-Before trying this, you should understand what GCM is.
+Chrome Extension side:
+https://github.com/dmiyakawa/dmiyakawa-gcm-extension
+
+See also:
 http://developer.chrome.com/apps/cloudMessaging.html
 
-To try this on your localhost (or remote server),
-You need to create secret.py that contains three secrets
-GCM will provide to you.
+***
+
+To try this on your environment, you need to add
+secret.py that contains the following three secrets.
 
 * CLIENT_ID
 * CLIENT_SECRET
 * REFRESH_TOKEN
 
-After launching the instance, you need to
-register extension's channel Ids to the server
-by accessing (host-name)/StoreChannelId/(channel-id).
-There's no comfortable-to-use UI there.
-There's no UI for deleting channel-id either.
+Also you need to specify your GAE app id to app.yaml
+
+***
 
 Licensed under the Apache License, Version 2.0.
