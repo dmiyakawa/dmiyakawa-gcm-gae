@@ -18,3 +18,5 @@ You don't need to deploy this to GAE production environment
 Because GCM doesn't require us to put messaging server on the cloud,
 you can just play with this experimental code with dev_appserver.py
 with real push messages.
+
+Licensed under the Apache License, Version 2.0.
