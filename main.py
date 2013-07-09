@@ -55,6 +55,17 @@ class Channel(ndb.Model):
   pass
 
 
+def get_world_ancestor_key():
+  '''
+  Key for id-s that must be unique world wide.
+  '''
+  return ndb.Key('ListName', 'debug')
+
+
+def simple_sanitize(raw_string):
+  return (raw_string.replace('<', '').replace('>', '')
+          .replace('"', '').replace("'",''))
+
 def is_appropriate_user(user):
   return LOCAL_DEV or user.email() == 'd.miyakawa@gmail.com'
 
@@ -65,31 +76,42 @@ def render_message(title, message):
   return template.render({'title': title, message: 'message'})
 
 
-class StoreChannelId(webapp2.RequestHandler):
+class RegisterChannelId(webapp2.RequestHandler):
   def get(self, channel_id):
+    logging.debug('RegisterChannelId: ' + channel_id)
+    self.response.headers.add_header('content-type',
+                                     'application/json',
+                                     charset='utf-8')
+
     user = users.get_current_user()
     if not user:
-      self.redirect(users.create_login_url(self.request.uri))
+      result = json.dumps({'result': 'failure',
+                           'message': 'Not logged in'})
+      self.response.out.write(result)
       return
 
     if not is_appropriate_user(user):
-      self.response.write(render_message('Error',
-                                         'Not open to public. Sorry.'))
+      result = json.dumps({'result': 'failure',
+                           'message': 'Inappropriate user'})
+      self.response.out.write(result)
       return
 
-    if Channel.get_by_id(channel_id):
-      self.response.write(render_message('Error',
-                                         'Channel already registered.'))
+    channel = Channel.get_by_id(id=channel_id,
+                                parent=get_world_ancestor_key())
+    if channel:
+      logging.debug('channel exists (id: {})'.format(channel.key.id()))
+      result = json.dumps({'result': 'failure',
+                           'message': 'Already registered'})
+      self.response.out.write(result)
       return
 
-    channel = Channel(id=channel_id)
+    channel = Channel(id=channel_id, parent=get_world_ancestor_key())
     channel.put()
-    self.response.write(render_message('Success',
-                                       ('{} has been registered'
-                                        .format(channel_id))))
+
+    result = json.dumps({'result': 'success'})
+    self.response.out.write(result)
     pass
   pass
-
 
 
 class SendMessage(webapp2.RequestHandler):
@@ -99,35 +121,33 @@ class SendMessage(webapp2.RequestHandler):
                                      charset='utf-8')
     user = users.get_current_user()
     if not user:
-      result = json.dumps({'result': 'error',
-                           'message': 'Not logged in.'})
+      result = json.dumps({'result': 'failure',
+                           'message': 'Not logged in'})
       self.response.out.write(result)
       return
-
+ 
     if not is_appropriate_user(user):
-      result = json.dumps({'result': 'error',
-                           'message': 'Not logged in.'})
+      result = json.dumps({'result': 'failure',
+                           'message': 'Inappropriate user'})
       self.response.out.write(result)
       return
 
     raw_channel_id = self.request.get('channel_id')
-    channel_id = (raw_channel_id.replace('<', '').replace('>', '')
-                  .replace('"', '').replace("'", ''))
+    channel_id = simple_sanitize(raw_channel_id)
     if len(channel_id) == 0:
-      result = json.dumps({'result': 'error',
+      result = json.dumps({'result': 'failure',
                            'message': 'No channel_id provided'})
       self.response.out.write(result)
       pass
 
     raw_message = self.request.get('message')
-    message = (raw_message.replace('<', '').replace('>', '')
-               .replace('"', '').replace("'", ''))
+    message = simple_sanitize(raw_message)
 
     if len(message) == 0:
       message = "(No message)"
       pass
 
-    access_tokens = AccessToken.query().order(-Channel.date).fetch(1)
+    access_tokens = AccessToken.query().order(-AccessToken.date).fetch(1)
     if (len(access_tokens) == 0 or not access_tokens[0].is_effective()):
       logging.debug('Fetching AccessToken')
       url = 'https://accounts.google.com/o/oauth2/token'
@@ -143,7 +163,7 @@ class SendMessage(webapp2.RequestHandler):
       json_data = json.loads(data)
       if not json_data.has_key('access_token'):
         result = json.dumps({'result': 'error',
-                           'message': 'Failed to fetch AccessToken'})
+                             'message': 'Failed to fetch AccessToken'})
         self.response.out.write(result)
         return
 
@@ -176,8 +196,7 @@ class SendMessage(webapp2.RequestHandler):
     try:
       response = urllib2.urlopen(req)
       logging.debug(response.read())
-      result = json.dumps({'result': 'success',
-                           'message': 'OK'})
+      result = json.dumps({'result': 'success'})
       self.response.out.write(result)
     except urllib2.HTTPError, e:
       logging.debug('Exception: {}'.format(e)) 
@@ -197,11 +216,11 @@ class Root(webapp2.RequestHandler):
       return
 
     if not is_appropriate_user(user):
-      self.response.write(render_message('Error',
+      self.response.write(render_message('Failure',
                                          'Not open to public. Sorry.'))
       return
 
-    channels = Channel.query().fetch()
+    channels = Channel.query(ancestor=get_world_ancestor_key()).fetch()
     
     template_file = '/templates/root.tmpl'
     template = JINJA_ENVIRONMENT.get_template(template_file)
@@ -211,7 +230,7 @@ class Root(webapp2.RequestHandler):
 
 
 app = webapp2.WSGIApplication([
-    ('/StoreChannelId/(.+)?', StoreChannelId),
+    ('/RegisterChannelId/(.+)?', RegisterChannelId),
     ('/SendMessage', SendMessage),
     ('/', Root),
 ], debug=True)

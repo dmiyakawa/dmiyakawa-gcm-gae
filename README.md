@@ -11,12 +11,10 @@ GCM will provide to you.
 * CLIENT_SECRET
 * REFRESH_TOKEN
 
-Possibly good news:
-You don't need to deploy this to GAE production environment
-(using appcfg.py).
-
-Because GCM doesn't require us to put messaging server on the cloud,
-you can just play with this experimental code with dev_appserver.py
-with real push messages.
+After launching the instance, you need to
+register extension's channel Ids to the server
+by accessing (host-name)/StoreChannelId/(channel-id).
+There's no comfortable-to-use UI there.
+There's no UI for deleting channel-id either.
 
 Licensed under the Apache License, Version 2.0.
