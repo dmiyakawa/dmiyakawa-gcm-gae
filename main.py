@@ -47,7 +47,7 @@ class AccessToken(ndb.Model):
     utcnow = datetime.datetime.utcnow()
     logging.debug('date: {}, expires_in: {}, utc_now: {}'
                   .format(self.date, self.expires_in, utcnow))
-    return self.date + datetime.timedelta(self.expires_in) > utcnow
+    return self.date + datetime.timedelta(seconds=self.expires_in) > utcnow
   pass
 
 
@@ -176,6 +176,8 @@ class SendMessage(webapp2.RequestHandler):
       access_token.put()
     else:
       access_token = access_tokens[0]
+      logging.debug('Access Token (id: {}) is effective.'
+                    .format(access_token.key.id()))
       pass
 
     url = 'https://www.googleapis.com/gcm_for_chrome/v1/messages'
